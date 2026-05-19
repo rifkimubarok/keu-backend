@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+enum AccountType {
+  BANK
+  EWALLET
+  CASH
+  SAVINGS
+  OTHER
+}
+
+enum AccountStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Account {
+  id             String        @id @default(uuid())
+  userId         String
+  name           String
+  type           AccountType
+  initialBalance Decimal       @db.Decimal(15, 2)
+  currentBalance Decimal       @db.Decimal(15, 2)
+  currency       String        @default("IDR")
+  status         AccountStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user                    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceTransactions      Transaction[] @relation("SourceAccount")
+  destinationTransactions Transaction[] @relation("DestinationAccount")
+
+  @@map("accounts")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum CategoryStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Category {
+  id              String          @id @default(uuid())
+  userId          String?
+  name            String
+  transactionType TransactionType
+  icon            String?
+  color           String?
+  isDefault       Boolean         @default(false)
+  status          CategoryStatus  @default(ACTIVE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("categories")
+}
+
+model Transaction {
+  id                   String          @id @default(uuid())
+  userId               String
+  type                 TransactionType
+  transactionDate      DateTime        @default(now())
+  amount               Decimal         @db.Decimal(15, 2)
+  feeAmount            Decimal?        @db.Decimal(15, 2)
+  sourceAccountId      String?
+  destinationAccountId String?
+  categoryId           String?
+  note                 String?         @db.Text
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceAccount      Account?  @relation("SourceAccount", fields: [sourceAccountId], references: [id])
+  destinationAccount Account?  @relation("DestinationAccount", fields: [destinationAccountId], references: [id])
+  category           Category? @relation(fields: [categoryId], references: [id])
+
+  @@map("transactions")
+}
