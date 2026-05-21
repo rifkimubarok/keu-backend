@@ -22,6 +22,8 @@ import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionsService } from './transactions.service';
 import { TransactionListResponseDto, TransactionResponseDto } from './dto/transaction-response.dto';
+import { TransactionSummaryFilterDto } from './dto/transaction-summary-filter.dto';
+import { TransactionSummaryResponseDto } from './dto/transaction-summary-response.dto';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -47,6 +49,16 @@ export class TransactionsController {
     @Query() filter: FilterTransactionDto,
   ) {
     return this.transactionsService.findAll(user.sub, filter);
+  }
+
+  @Get('summary/monthly')
+  @ApiOperation({ summary: 'Get monthly transaction summary (income, expense, net cash flow)' })
+  @ApiResponse({ status: 200, type: TransactionSummaryResponseDto })
+  getSummary(
+    @CurrentUser() user: AuthUser,
+    @Query() filter: TransactionSummaryFilterDto,
+  ) {
+    return this.transactionsService.getSummary(user.sub, filter);
   }
 
   @Get(':id')

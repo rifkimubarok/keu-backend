@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { TransactionSummaryFilterDto } from './dto/transaction-summary-filter.dto';
 
 type TxClient = Prisma.TransactionClient;
 
@@ -269,6 +270,48 @@ export class TransactionsService {
         });
       }
     }
+  }
+
+  async getSummary(userId: string, filter: TransactionSummaryFilterDto = {}) {
+    const now = new Date();
+    const month = filter.month ?? now.getMonth() + 1;
+    const year = filter.year ?? now.getFullYear();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        transactionDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const totalIncome = transactions
+      .filter((t) => t.type === TransactionType.INCOME)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const totalExpense = transactions
+      .filter((t) => t.type === TransactionType.EXPENSE)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const transferFees = transactions
+      .filter((t) => t.type === TransactionType.TRANSFER && t.feeAmount)
+      .reduce((sum, t) => sum + Number(t.feeAmount || 0), 0);
+
+    const finalExpense = totalExpense + transferFees;
+    const netCashFlow = totalIncome - finalExpense;
+
+    return single({
+      totalIncome,
+      totalExpense: finalExpense,
+      netCashFlow,
+      month,
+      year,
+    });
   }
 
   private validateTransaction(transaction: CreateTransactionDto) {
