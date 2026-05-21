@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { User, Prisma } from '../../generated/prisma';
 import { randomBytes } from 'crypto';
+import { single } from '../common/dto/single-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +18,23 @@ export class UsersService {
     return this.prisma.user.create({
       data,
     });
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        telegramId: true,
+        nlModeEnabled: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return single(user);
   }
 
   async generateTelegramLinkToken(userId: string): Promise<string> {

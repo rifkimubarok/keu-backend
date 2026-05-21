@@ -10,6 +10,12 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile' })
+  getProfile(@CurrentUser() user: AuthUser) {
+    return this.usersService.getProfile(user.sub);
+  }
+
   @Post('telegram-link')
   @ApiOperation({ summary: 'Generate a one-time Telegram link token (expires in 15 min)' })
   async generateTelegramLink(@CurrentUser() user: AuthUser) {
