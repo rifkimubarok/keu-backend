@@ -1,8 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/auth-user.type';
 import { DashboardService } from './dashboard.service';
+import { DashboardResponseDto } from './dto/dashboard-response.dto';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
@@ -12,6 +13,7 @@ export class DashboardController {
 
   @Get()
   @ApiOperation({ summary: 'Get user financial summary dashboard' })
+  @ApiResponse({ status: 200, type: DashboardResponseDto })
   getSummary(@CurrentUser() user: AuthUser) {
     return this.dashboardService.getSummary(user.sub);
   }

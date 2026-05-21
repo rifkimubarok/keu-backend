@@ -3,6 +3,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -11,6 +12,7 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { FilterCategoryDto } from './dto/filter-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryListResponseDto, CategoryResponseDto } from './dto/category-response.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -20,6 +22,7 @@ export class CategoriesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new category' })
+  @ApiResponse({ status: 201, type: CategoryResponseDto })
   create(
     @CurrentUser() user: AuthUser,
     @Body() createCategoryDto: CreateCategoryDto,
@@ -29,6 +32,7 @@ export class CategoriesController {
 
   @Get()
   @ApiOperation({ summary: 'List all categories for the user' })
+  @ApiResponse({ status: 200, type: CategoryListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() filter: FilterCategoryDto) {
     return this.categoriesService.findAll(user.sub, filter);
   }
@@ -36,6 +40,7 @@ export class CategoriesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get category details' })
   @ApiParam({ name: 'id', description: 'Category ID' })
+  @ApiResponse({ status: 200, type: CategoryResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.categoriesService.findOne(id, user.sub);
   }
@@ -43,6 +48,7 @@ export class CategoriesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a category' })
   @ApiParam({ name: 'id', description: 'Category ID' })
+  @ApiResponse({ status: 200, type: CategoryResponseDto })
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -54,6 +60,7 @@ export class CategoriesController {
   @Patch(':id/archive')
   @ApiOperation({ summary: 'Archive a category' })
   @ApiParam({ name: 'id', description: 'Category ID' })
+  @ApiResponse({ status: 200, type: CategoryResponseDto })
   archive(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.categoriesService.archive(id, user.sub);
   }

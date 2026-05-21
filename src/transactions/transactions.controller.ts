@@ -12,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -20,6 +21,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionsService } from './transactions.service';
+import { TransactionListResponseDto, TransactionResponseDto } from './dto/transaction-response.dto';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -29,6 +31,7 @@ export class TransactionsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new transaction' })
+  @ApiResponse({ status: 201, type: TransactionResponseDto })
   create(
     @CurrentUser() user: AuthUser,
     @Body() createTransactionDto: CreateTransactionDto,
@@ -38,6 +41,7 @@ export class TransactionsController {
 
   @Get()
   @ApiOperation({ summary: 'List transactions with filters' })
+  @ApiResponse({ status: 200, type: TransactionListResponseDto })
   findAll(
     @CurrentUser() user: AuthUser,
     @Query() filter: FilterTransactionDto,
@@ -48,6 +52,7 @@ export class TransactionsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get transaction details' })
   @ApiParam({ name: 'id', description: 'Transaction ID' })
+  @ApiResponse({ status: 200, type: TransactionResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.transactionsService.findOne(id, user.sub);
   }
@@ -55,6 +60,7 @@ export class TransactionsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a transaction' })
   @ApiParam({ name: 'id', description: 'Transaction ID' })
+  @ApiResponse({ status: 200, type: TransactionResponseDto })
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -66,6 +72,7 @@ export class TransactionsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a transaction' })
   @ApiParam({ name: 'id', description: 'Transaction ID' })
+  @ApiResponse({ status: 200, type: TransactionResponseDto })
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.transactionsService.remove(id, user.sub);
   }

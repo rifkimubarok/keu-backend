@@ -12,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -20,6 +21,11 @@ import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FilterAccountDto } from './dto/filter-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import {
+  AccountListResponseDto,
+  AccountResponseDto,
+  TotalBalanceResponseDto,
+} from './dto/account-response.dto';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
@@ -29,6 +35,7 @@ export class AccountsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new account' })
+  @ApiResponse({ status: 201, type: AccountResponseDto })
   create(
     @CurrentUser() user: AuthUser,
     @Body() createAccountDto: CreateAccountDto,
@@ -38,12 +45,14 @@ export class AccountsController {
 
   @Get()
   @ApiOperation({ summary: 'List all accounts for the user' })
+  @ApiResponse({ status: 200, type: AccountListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() filter: FilterAccountDto) {
     return this.accountsService.findAll(user.sub, filter);
   }
 
   @Get('balance/total')
   @ApiOperation({ summary: 'Get total balance from all active accounts' })
+  @ApiResponse({ status: 200, type: TotalBalanceResponseDto })
   getTotalBalance(@CurrentUser() user: AuthUser) {
     return this.accountsService.getTotalBalance(user.sub);
   }
@@ -51,6 +60,7 @@ export class AccountsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get account details' })
   @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.accountsService.findOne(id, user.sub);
   }
@@ -58,6 +68,7 @@ export class AccountsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update an account' })
   @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -69,6 +80,7 @@ export class AccountsController {
   @Patch(':id/archive')
   @ApiOperation({ summary: 'Archive an account' })
   @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
   archive(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.accountsService.archive(id, user.sub);
   }
@@ -76,6 +88,7 @@ export class AccountsController {
   @Patch(':id/unarchive')
   @ApiOperation({ summary: 'Unarchive an account' })
   @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
   unarchive(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.accountsService.unarchive(id, user.sub);
   }
@@ -83,6 +96,7 @@ export class AccountsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an account' })
   @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.accountsService.remove(id, user.sub);
   }
