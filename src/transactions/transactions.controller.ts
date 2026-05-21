@@ -24,6 +24,12 @@ import { TransactionsService } from './transactions.service';
 import { TransactionListResponseDto, TransactionResponseDto } from './dto/transaction-response.dto';
 import { TransactionSummaryFilterDto } from './dto/transaction-summary-filter.dto';
 import { TransactionSummaryResponseDto } from './dto/transaction-summary-response.dto';
+import { CashflowTrendFilterDto } from './dto/cashflow-trend-filter.dto';
+import {
+  CashflowTrendResponseDto,
+  ExpenseByCategoryResponseDto,
+  IncomeByCategoryResponseDto,
+} from './dto/transaction-analytics-response.dto';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -59,6 +65,36 @@ export class TransactionsController {
     @Query() filter: TransactionSummaryFilterDto,
   ) {
     return this.transactionsService.getSummary(user.sub, filter);
+  }
+
+  @Get('summary/cashflow-trend')
+  @ApiOperation({ summary: 'Get daily cashflow trend for a month' })
+  @ApiResponse({ status: 200, type: CashflowTrendResponseDto })
+  getCashflowTrend(
+    @CurrentUser() user: AuthUser,
+    @Query() filter: CashflowTrendFilterDto,
+  ) {
+    return this.transactionsService.getCashflowTrend(user.sub, filter);
+  }
+
+  @Get('summary/expense-by-category')
+  @ApiOperation({ summary: 'Get expense breakdown by category' })
+  @ApiResponse({ status: 200, type: ExpenseByCategoryResponseDto })
+  getExpenseByCategory(
+    @CurrentUser() user: AuthUser,
+    @Query() filter: TransactionSummaryFilterDto,
+  ) {
+    return this.transactionsService.getExpenseByCategory(user.sub, filter);
+  }
+
+  @Get('summary/income-by-category')
+  @ApiOperation({ summary: 'Get income breakdown by category' })
+  @ApiResponse({ status: 200, type: IncomeByCategoryResponseDto })
+  getIncomeByCategory(
+    @CurrentUser() user: AuthUser,
+    @Query() filter: TransactionSummaryFilterDto,
+  ) {
+    return this.transactionsService.getIncomeByCategory(user.sub, filter);
   }
 
   @Get(':id')

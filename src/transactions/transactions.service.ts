@@ -11,6 +11,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionSummaryFilterDto } from './dto/transaction-summary-filter.dto';
+import { CashflowTrendFilterDto } from './dto/cashflow-trend-filter.dto';
 
 type TxClient = Prisma.TransactionClient;
 
@@ -309,6 +310,189 @@ export class TransactionsService {
       totalIncome,
       totalExpense: finalExpense,
       netCashFlow,
+      month,
+      year,
+    });
+  }
+
+  async getCashflowTrend(userId: string, filter: CashflowTrendFilterDto = {}) {
+    const now = new Date();
+    const month = filter.month ?? now.getMonth() + 1;
+    const year = filter.year ?? now.getFullYear();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        transactionDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const dailyFlow = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayTransactions = transactions.filter((t) => {
+        const txDay = new Date(t.transactionDate).getDate();
+        return txDay === day;
+      });
+
+      const income = dayTransactions
+        .filter((t) => t.type === TransactionType.INCOME)
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const expense = dayTransactions
+        .filter((t) => t.type === TransactionType.EXPENSE)
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const transferFees = dayTransactions
+        .filter((t) => t.type === TransactionType.TRANSFER && t.feeAmount)
+        .reduce((sum, t) => sum + Number(t.feeAmount || 0), 0);
+
+      const finalExpense = expense + transferFees;
+
+      dailyFlow.push({
+        day,
+        income,
+        expense: finalExpense,
+        net: income - finalExpense,
+      });
+    }
+
+    return single({
+      dailyFlow,
+      month,
+      year,
+    });
+  }
+
+  async getExpenseByCategory(
+    userId: string,
+    filter: TransactionSummaryFilterDto = {},
+  ) {
+    const now = new Date();
+    const month = filter.month ?? now.getMonth() + 1;
+    const year = filter.year ?? now.getFullYear();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: TransactionType.EXPENSE,
+        transactionDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    const categoryMap = new Map<
+      string,
+      { name: string; total: number; count: number }
+    >();
+
+    transactions.forEach((t) => {
+      const catId = t.categoryId || 'uncategorized';
+      const catName = t.category?.name || 'Uncategorized';
+      const existing = categoryMap.get(catId) || {
+        name: catName,
+        total: 0,
+        count: 0,
+      };
+      categoryMap.set(catId, {
+        name: catName,
+        total: existing.total + Number(t.amount),
+        count: existing.count + 1,
+      });
+    });
+
+    const categories = Array.from(categoryMap.entries()).map(
+      ([categoryId, data]) => ({
+        categoryId,
+        categoryName: data.name,
+        total: data.total,
+        transactionCount: data.count,
+      }),
+    );
+
+    const totalExpense = categories.reduce((sum, c) => sum + c.total, 0);
+
+    return single({
+      categories,
+      totalExpense,
+      month,
+      year,
+    });
+  }
+
+  async getIncomeByCategory(
+    userId: string,
+    filter: TransactionSummaryFilterDto = {},
+  ) {
+    const now = new Date();
+    const month = filter.month ?? now.getMonth() + 1;
+    const year = filter.year ?? now.getFullYear();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: TransactionType.INCOME,
+        transactionDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    const categoryMap = new Map<
+      string,
+      { name: string; total: number; count: number }
+    >();
+
+    transactions.forEach((t) => {
+      const catId = t.categoryId || 'uncategorized';
+      const catName = t.category?.name || 'Uncategorized';
+      const existing = categoryMap.get(catId) || {
+        name: catName,
+        total: 0,
+        count: 0,
+      };
+      categoryMap.set(catId, {
+        name: catName,
+        total: existing.total + Number(t.amount),
+        count: existing.count + 1,
+      });
+    });
+
+    const categories = Array.from(categoryMap.entries()).map(
+      ([categoryId, data]) => ({
+        categoryId,
+        categoryName: data.name,
+        total: data.total,
+        transactionCount: data.count,
+      }),
+    );
+
+    const totalIncome = categories.reduce((sum, c) => sum + c.total, 0);
+
+    return single({
+      categories,
+      totalIncome,
       month,
       year,
     });
