@@ -110,4 +110,19 @@ export class AccountsService {
 
     return single(account);
   }
+
+  async getTotalBalance(userId: string) {
+    const result = await this.prisma.account.aggregate({
+      where: { userId, status: AccountStatus.ACTIVE },
+      _sum: {
+        currentBalance: true,
+      },
+      _count: true,
+    });
+
+    return single({
+      totalBalance: Number(result._sum.currentBalance || 0),
+      accountCount: result._count,
+    });
+  }
 }

@@ -42,6 +42,12 @@ export class AccountsController {
     return this.accountsService.findAll(user.sub, filter);
   }
 
+  @Get('balance/total')
+  @ApiOperation({ summary: 'Get total balance from all active accounts' })
+  getTotalBalance(@CurrentUser() user: AuthUser) {
+    return this.accountsService.getTotalBalance(user.sub);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get account details' })
   @ApiParam({ name: 'id', description: 'Account ID' })
