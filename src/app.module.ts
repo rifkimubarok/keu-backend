@@ -20,6 +20,7 @@ import { NlModule } from './nl/nl.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN'),
+        launchOptions: configService.get('TELEGRAM_MODE') === 'webhook' ? false : {},
       }),
       inject: [ConfigService],
     }),

@@ -35,6 +35,13 @@ export class TelegramUpdate implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    if (process.env.TELEGRAM_MODE === 'webhook' && process.env.TELEGRAM_WEBHOOK_DOMAIN) {
+      const webhookUrl = `${process.env.TELEGRAM_WEBHOOK_DOMAIN}/telegram/webhook`;
+      await this.bot.telegram.setWebhook(webhookUrl, {
+        secret_token: process.env.TELEGRAM_SECRET_TOKEN || undefined,
+      });
+    }
+
     await this.bot.telegram.setMyCommands([
       { command: 'start', description: 'Hubungkan akun Telegram' },
       { command: 'help', description: 'Daftar perintah' },
